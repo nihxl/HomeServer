@@ -1,0 +1,21 @@
+services:
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: homarr
+    restart: unless-stopped
+    ports:
+      - "7575:7575"
+    volumes:
+      - <YOUR_DIRECTORY>:/appdata
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - SECRET_ENCRYPTION_KEY=<YOUR_KEY>
+    networks:
+      - homarr_net
+
+networks:
+  homarr_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.32.0.0/24

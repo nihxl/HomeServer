@@ -1,0 +1,26 @@
+# Secrets & environment files
+.env
+*.env
+.env.*
+
+# Database data
+**/pgdata/
+**/database/
+*.db
+*.sqlite
+*.sqlite3
+
+# Container data/volumes
+**/data/
+**/appdata/
+
+# Logs
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor junk
+.vscode/
+.idea/

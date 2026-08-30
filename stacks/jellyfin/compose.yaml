@@ -1,0 +1,18 @@
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+      - "8920:8920"
+    volumes:
+      - <YOUR_DIRECTORY>/config:/config
+      - <YOUR_DIRECTORY>/movies:/data/movies
+      - <YOUR_DIRECTORY>/tv:/data/tv
+      - <YOUR_DIRECTORY>/music:/data/music
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=IN
+      - JELLYFIN_PublishedServerUrl=http://<YOUR_SERVER_IP>

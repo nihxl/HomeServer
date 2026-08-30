@@ -1,0 +1,14 @@
+services:
+   spotify-connect:
+    image: giof71/librespot:latest
+    container_name: spotify-connect
+    restart: unless-stopped
+    network_mode: host
+    devices:
+      - /dev/snd:/dev/snd
+    environment:
+      - BACKEND=alsa
+      - DEVICE=hw:1,0
+      - DEVICE_NAME=Server Speaker
+      - BITRATE=320
+      - INITIAL_VOLUME=70

@@ -1,0 +1,25 @@
+services:
+  neko:
+    image: ghcr.io/m1k1o/neko/firefox:latest
+    restart: unless-stopped
+    shm_size: 2gb
+    ports:
+      - 8098:8080
+      - 52000-52099:52000-52099/udp
+    environment:
+      - NEKO_SCREEN=1920x1080@30
+      - NEKO_PASSWORD=${NEKO_PASSWORD}
+      - NEKO_PASSWORD_ADMIN=${NEKO_PASSWORD_ADMIN}
+      - NEKO_EPR=52000-52099
+      - NEKO_ICELITE=1
+      - NEKO_NAT1TO1=<YOUR_SERVER_IP_ADDRESS>
+    volumes:
+      - <YOUR_DIRECTORY>:/home/neko/Downloads
+      - <YOUR_DIRECTORY>/policies.json:/usr/lib/firefox/distribution/policies.json
+    depends_on:
+      - tor
+  tor:
+    image: dperson/torproxy
+    container_name: neko-tor
+    restart: unless-stopped
+networks: {}

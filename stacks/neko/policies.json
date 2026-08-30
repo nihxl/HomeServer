@@ -1,0 +1,11 @@
+{
+  "policies": {
+    "Proxy": {
+      "Mode": "manual",
+      "SOCKSProxy": "tor:9050",
+      "SOCKSProxyVersion": 5,
+      "UseProxyForDNS": true,
+      "Locked": false
+    }
+  }
+}

@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  db:
+    image: akkoma-db:latest
+    build: ./docker-resources/database
+    shm_size: 4gb
+    restart: unless-stopped
+    user: ${DOCKER_USER}
+    environment: {
+      POSTGRES_DB: akkoma,
+      POSTGRES_USER: <YOUR_POSTGRES_USERN>,
+      POSTGRES_PASSWORD: <YOUR_POSTGRES_PASSWORD>,
+    }
+    env_file:
+      - .env 
+    volumes:
+      - type: bind
+        source: ./pgdata
+        target: /var/lib/postgresql/data
+
+  akkoma:
+    image: akkoma:latest
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    links:
+      - db
+    ports: [      
+      "0.0.0.0:4000:4000",
+    ]
+    volumes:
+      - .:/opt/akkoma
+    ulimits:
+      nofile: 524288
+
+  #  image: caddy:2-alpine
+  #  restart: unless-stopped
+  #  links:
+  #    - akkoma
+  #  ports: [
+  #     "443:443",
+  #     "80:80"
+  #  ]
+  #  volumes:
+  #    - ./docker-resources/Caddyfile:/etc/caddy/Caddyfile
+  #    - ./caddy-data:/data
+  #    - ./caddy-config:/config
