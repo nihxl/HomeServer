@@ -1,0 +1,148 @@
+{
+  "name": "Docker Container Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -192,
+        -48
+      ],
+      "id": "bf337cbc-dd37-4270-8cfa-f3b65b457636",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "command": "docker ps -a --filter \"status=exited\" --filter \"status=dead\" --format '{{.Names}}: {{.Status}}'"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        32,
+        -48
+      ],
+      "id": "42b4e026-4ed9-4e50-8864-506c43af8ddc",
+      "name": "Check Stopped Containers",
+      "credentials": {
+        "sshPassword": {
+          "id": "LCvZ4ku3totJd3sg",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "<YOUR_ID>",
+              "leftValue": "={{ $node[\"Check Stopped Containers\"].json.stdout }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        -48
+      ],
+      "id": "51158882-6138-4ab4-a238-1ba73d76dfa6",
+      "name": "Has Down Containers"
+    },
+    {
+      "parameters": {
+        "chatId": "<YOUR_CHAT_ID>",
+        "text": "=⚠️ <b>Docker container(s) down:</b>\n\n<pre>{{ $node[\"Check Stopped Containers\"].json.stdout }}</pre>",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        -48
+      ],
+      "id": "6c3f134c-81b4-4ee4-be02-7ce18631c559",
+      "name": "Send a text message",
+      "webhookId": "1d554b81-758a-4fd4-9703-ddb826c98c9c",
+      "credentials": {
+        "telegramApi": {
+          "id": "<YOUR_TELEGRAM_API_KEY>",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Stopped Containers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Stopped Containers": {
+      "main": [
+        [
+          {
+            "node": "Has Down Containers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Down Containers": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ee1c6e91-9505-465d-a16c-5a3892c2db3a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c387eda13bcd31cf3c61001789afe0137d2257fb9a573cf9cce9fba498c81b6f"
+  },
+  "nodeGroups": [],
+  "id": "bjrszo8Q8bkyO5NP",
+  "tags": []
+}

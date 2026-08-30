@@ -1,0 +1,331 @@
+{
+  "name": "Obsidian Note Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        64,
+        0
+      ],
+      "id": "26baa9eb-1bc0-4a35-a1ef-b76cdef612fb",
+      "name": "Telegram Trigger",
+      "webhookId": "22f626c7-53fc-4274-80d0-dd2756c300ae",
+      "credentials": {
+        "telegramApi": {
+          "id": "<YOUR_TELEGRAM_API_KEY>",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "54ce645c-f930-453c-9074-907852a5904c",
+              "leftValue": "={{ $json.message.voice }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "384eaf67-31ca-48a5-9523-6f87bb2fbecc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        464,
+        -160
+      ],
+      "id": "6944539b-2997-40ef-b929-8dc0f738462e",
+      "name": "Get a file",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "telegramApi": {
+          "id": "<YOUR_TELEGRAM_API_KEY>",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=If this note is written in Malayalam or a mix of Malayalam and English, translate it fully into English first. Then convert it into clean Obsidian markdown. Add a title as an H1, use bullet points where appropriate, and add relevant tags at the bottom as #tag format. Keep the content faithful to the original meaning. Return only the final markdown, no commentary.\nRaw note: {{ $json.message.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        96
+      ],
+      "id": "b8c126fc-cd7f-41d2-b876-fd3d4cc1a359",
+      "name": "Format Text Note",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nD05e2swg44vUbHM",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        784,
+        -16
+      ],
+      "id": "31df0cab-9a4f-4de2-9465-f893dabce87b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.5-flash"
+        },
+        "text": "Transcribe this audio accurately. If any part of the audio is in Malayalam or a mix of Malayalam and English, translate all of it into English — do not keep any Malayalam text in the output. Then convert the fully English transcription into clean Obsidian markdown. Add a title as an H1, use bullet points where appropriate, and add relevant tags at the bottom as #tag format. Return only the final markdown, no commentary.",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        656,
+        -160
+      ],
+      "id": "2b1506b4-4f00-4a21-b5ec-e814baf84a6a",
+      "name": "Analyze audio",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nD05e2swg44vUbHM",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=echo \"{{ $json.content.parts[0].text }}\" > \"<YOUR_DIRECTORY>/$(date +%Y%m%d_%H%M%S).md\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        -16
+      ],
+      "id": "a55b1d09-d5b2-48ec-b38b-8f3712c5e48f",
+      "name": "Write Note File",
+      "credentials": {
+        "sshPassword": {
+          "id": "LCvZ4ku3totJd3sg",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "cd <YOUR_DIRECTORY> && git add . && git commit -m \"Auto note $(date +%Y-%m-%d_%H:%M)\" && git push"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        -16
+      ],
+      "id": "25962484-a944-463f-b030-23e0b312ea05",
+      "name": "Git Commit & Push",
+      "credentials": {
+        "sshPassword": {
+          "id": "LCvZ4ku3totJd3sg",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "✅ Note saved to Obsidian",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        -16
+      ],
+      "id": "ba52567d-80cb-4b5d-b61a-1b5cdf0e320e",
+      "name": "Send a text message",
+      "webhookId": "50416c95-d7b4-4171-ba9a-06e3589ea901",
+      "credentials": {
+        "telegramApi": {
+          "id": "<YOUR_TELEGRAM_API_KEY>",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Text Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Analyze audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Text Note": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Analyze audio": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Write Note File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Note File": {
+      "main": [
+        [
+          {
+            "node": "Git Commit & Push",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Git Commit & Push": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "2cf6b41b-6b30-4ab7-a2e2-cef0245991a2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c387eda13bcd31cf3c61001789afe0137d2257fb9a573cf9cce9fba498c81b6f"
+  },
+  "nodeGroups": [],
+  "id": "LbkZRJJH1RStZfxF",
+  "tags": []
+}

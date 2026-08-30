@@ -1,0 +1,184 @@
+{
+  "name": "SSD Health Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -480,
+        -320
+      ],
+      "id": "c7ef3222-a2f2-4024-891a-08baba38a348",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "command": "sudo smartctl -a /dev/sda | awk '$1==202 {print $4}'"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -320
+      ],
+      "id": "a4a40f01-294c-4bd3-90b1-d2d0de61e8c3",
+      "name": "Get Current %",
+      "credentials": {
+        "sshPassword": {
+          "id": "LCvZ4ku3totJd3sg",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "cat /home/Server/Docker/n8n/last_ssd_life.txt 2>/dev/null || echo \"100\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -320
+      ],
+      "id": "YOUR_ID",
+      "name": "Get Last %",
+      "credentials": {
+        "sshPassword": {
+          "id": "LCvZ4ku3totJd3sg",
+          "name": "SSH Password account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "711b2b40-9474-4495-81d1-d2f2dc974bf9",
+              "leftValue": "={{ Math.abs(parseInt($node[\"Get Current %\"].json.stdout) - parseInt($node[\"Get Last %\"].json.stdout)) }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        -320
+      ],
+      "id": "cf5c9f94-1e77-475f-8651-bdf79aca72a7",
+      "name": "Check 5% Change"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_ID",
+        "text": "=🔧 SSD Life Left: {{ $node[\"Get Current %\"].json.stdout }}% (previously {{ $node[\"Get Last %\"].json.stdout }}%)",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        -320
+      ],
+      "id": "YOUR_ID",
+      "name": "Save New %",
+      "webhookId": "00010848-d04f-49a6-a552-3328708ab520",
+      "credentials": {
+        "telegramApi": {
+          "id": "<YOUR_TELEGRAM_API_KEY>",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Current %",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current %": {
+      "main": [
+        [
+          {
+            "node": "Get Last %",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Last %": {
+      "main": [
+        [
+          {
+            "node": "Check 5% Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check 5% Change": {
+      "main": [
+        [
+          {
+            "node": "Save New %",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save New %",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ca94929f-2e52-4c81-b00d-df10a3e65e87",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c387eda13bcd31cf3c61001789afe0137d2257fb9a573cf9cce9fba498c81b6f"
+  },
+  "nodeGroups": [],
+  "id": "06TYWskk8ZUxcHYW",
+  "tags": []
+}
